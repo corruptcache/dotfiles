@@ -1,0 +1,21 @@
+[alias]
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+[pull]
+	rebase = true
+[init]
+	defaultBranch = main
+[user]
+	name = corruptcache
+	email = andrew@jknowles.email
+[credential]
+	helper = 
+	helper = /usr/bin/git-credential-manager
+	credentialStore = secretservice
+	guiPrompt = false
+[credential "https://dev.azure.com"]
+	useHttpPath = true
+[core]
+	editor = nvim
