@@ -1,0 +1,6 @@
+# LazyVim / Neovim runtime caches and state
+.config/nvim/lazy-lock.json
+.config/nvim/plugin/
+.local/state/nvim/
+.local/share/nvim/
+.cache/nvim/
