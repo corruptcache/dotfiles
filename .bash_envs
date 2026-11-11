@@ -1,0 +1,26 @@
+# --- Portable Environment Variables ---
+
+# Default Editor
+export EDITOR="nvim"
+export VISUAL="nvim"
+export SUDO_EDITOR="$EDITOR"
+
+# Colorize bat and man pages
+export BAT_THEME=ansi
+export MANROFFOPT="-c"
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+
+# Force UTF-8 Locale for headless SSH sessions
+if [ -z "${LANG:-}" ]; then
+    [ -r /etc/locale.conf ] && . /etc/locale.conf
+    LANG="${LANG:-C.UTF-8}"
+    export LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY \
+      LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT \
+      LC_IDENTIFICATION
+fi
+
+# Ensure ~/.local/bin is in PATH for custom scripts
+case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
