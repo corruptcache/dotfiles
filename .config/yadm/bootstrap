@@ -1,0 +1,122 @@
+#!/bin/bash
+
+MACHINE_CLASS=$(yadm config local.class)
+
+if [[ "$MACHINE_CLASS" == "DevServer" ]]; then
+    echo "Provisioning Headless Dev Server (Obelisk) with full Omarchy toolset..."
+
+    # ==========================================
+    # 1. OS-Specific Package Installation
+    # ==========================================
+    if command -v pacman &> /dev/null; then
+        echo "Detected Arch Linux / Omarchy..."
+        sudo pacman -Syu --noconfirm
+        sudo pacman -S --noconfirm base-devel git curl wget unzip tar \
+            bat eza fzf tmux ripgrep fd neovim lazygit \
+            wireshark-cli termshark nmap docker docker-compose \
+            tldr yt-dlp
+        
+        sudo usermod -aG wireshark $USER
+        sudo systemctl enable --now docker
+        sudo usermod -aG docker $USER
+
+    elif command -v dnf &> /dev/null; then
+        echo "Detected Fedora / AlmaLinux..."
+        sudo dnf upgrade -y
+        sudo dnf install -y gcc make git curl wget unzip tar \
+            bat eza fzf tmux ripgrep fd-find neovim lazygit \
+            wireshark-cli termshark nmap dnf-plugins-core \
+            tldr yt-dlp
+        
+        sudo usermod -aG wireshark $USER
+        
+        echo "Installing official Docker Engine..."
+        sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+        sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        sudo systemctl enable --now docker
+        sudo usermod -aG docker $USER
+
+    elif command -v apt &> /dev/null; then
+        echo "Detected Debian / Ubuntu..."
+        sudo apt update
+        sudo apt install -y build-essential curl git unzip tar wget \
+            bat fzf eza tmux ripgrep fd-find python3-venv python3-pip \
+            tshark termshark nmap apt-transport-https ca-certificates \
+            tldr yt-dlp
+        
+        echo "Configuring Termshark permissions..."
+        sudo dpkg-reconfigure wireshark-common
+        sudo usermod -aG wireshark $USER
+
+        echo "Installing official Docker Engine..."
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sudo sh get-docker.sh
+        sudo usermod -aG docker $USER
+        rm get-docker.sh
+
+        echo "Installing Neovim (Latest binary for LazyVim)..."
+        curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+        sudo rm -rf /opt/nvim
+        sudo tar -C /opt -xzf nvim-linux64.tar.gz
+        echo 'export PATH="$PATH:/opt/nvim-linux64/bin"' >> ~/.bash_envs
+        rm nvim-linux64.tar.gz
+
+        echo "Installing Lazygit..."
+        LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+        curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+        tar xf lazygit.tar.gz lazygit
+        sudo install lazygit /usr/local/bin
+        rm lazygit.tar.gz lazygit
+    else
+        echo "Unsupported OS for DevServer provisioning."
+        exit 1
+    fi
+
+    # ==========================================
+    # 2. Universal CLI Tools (Cross-Platform)
+    # ==========================================
+    echo "Installing Starship & Zoxide..."
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+    curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+
+    echo "Installing 'try' (Omarchy sandbox tool)..."
+    mkdir -p ~/.local/bin
+    curl -fsSL https://raw.githubusercontent.com/tobi/try/master/try -o ~/.local/bin/try
+    chmod +x ~/.local/bin/try
+
+    # ==========================================
+    # 3. User-Space Dev Languages (Mise)
+    # ==========================================
+    if ! command -v mise &> /dev/null; then
+        echo "Installing mise..."
+        curl https://mise.run | sh
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    
+    echo "Installing Node.js and Python..."
+    mise use --global node@latest
+    mise use --global python@latest
+
+    echo "======================================================"
+    echo "Dev Server setup complete! Welcome to the Omarchy TUI."
+    echo "Please log out and SSH back in to apply group changes."
+    echo "======================================================"
+
+elif [[ "$MACHINE_CLASS" == "ThinClient" ]]; then
+    echo "Provisioning Thin Client..."
+    
+    if command -v pkg &> /dev/null; then
+        pkg update
+        pkg install -y openssh git tmux neovim curl
+    elif command -v pacman &> /dev/null; then
+        sudo pacman -Syu --noconfirm
+        sudo pacman -S --noconfirm openssh git tmux neovim curl
+    elif command -v dnf &> /dev/null; then
+        sudo dnf install -y openssh-clients git tmux neovim curl
+    elif command -v apt &> /dev/null; then
+        sudo apt update
+        sudo apt install -y openssh-client git tmux neovim curl
+    fi
+else
+    echo "No class defined. Skipping automated installs."
+fi
