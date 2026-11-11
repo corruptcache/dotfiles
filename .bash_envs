@@ -5,10 +5,18 @@ export EDITOR="nvim"
 export VISUAL="nvim"
 export SUDO_EDITOR="$EDITOR"
 
-# Colorize bat and man pages
+# Colorize bat and man pages transparently across Arch (bat) and Debian (batcat)
 export BAT_THEME=ansi
 export MANROFFOPT="-c"
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+
+if command -v batcat &> /dev/null; then
+    # We are on Debian/Ubuntu
+    alias bat='batcat'
+    export MANPAGER="sh -c 'col -bx | batcat -l man -p'"
+elif command -v bat &> /dev/null; then
+    # We are on Arch/Omarchy
+    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+fi
 
 # Force UTF-8 Locale for headless SSH sessions
 if [ -z "${LANG:-}" ]; then
