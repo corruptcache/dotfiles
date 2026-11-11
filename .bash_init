@@ -1,0 +1,30 @@
+# --- Portable Tool Initialization ---
+
+# mise (Tool version manager)
+if command -v mise &> /dev/null; then
+    eval "$(mise activate bash)"
+fi
+
+# Starship (Cross-shell prompt)
+if [[ $- == *i* ]] && [[ ${TERM:-} != "dumb" ]] && command -v starship &> /dev/null; then
+    eval "$(starship init bash --print-full-init)"
+fi
+
+# Zoxide (Smarter cd)
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init bash)"
+fi
+
+# fzf Keybindings (OS-Aware)
+if command -v fzf &> /dev/null; then
+    # Arch/Omarchy path
+    if [[ -f /usr/share/fzf/key-bindings.bash ]]; then
+        source /usr/share/fzf/key-bindings.bash
+    # Fedora path
+    elif [[ -f /usr/share/fzf/shell/key-bindings.bash ]]; then
+        source /usr/share/fzf/shell/key-bindings.bash
+    # Debian/Ubuntu path
+    elif [[ -f /usr/share/doc/fzf/examples/key-bindings.bash ]]; then
+        source /usr/share/doc/fzf/examples/key-bindings.bash
+    fi
+fi
